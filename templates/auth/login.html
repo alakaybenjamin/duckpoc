@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="text-center">Login</h2>
+                </div>
+                <div class="card-body">
+                    <form id="loginForm" onsubmit="handleLogin(event)">
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="email" name="username" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="password" class="form-label">Password</label>
+                            <input type="password" class="form-control" id="password" name="password" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">Login</button>
+                    </form>
+                    <div class="mt-3 text-center">
+                        <a href="/auth/register">Don't have an account? Register here</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+async function handleLogin(event) {
+    event.preventDefault();
+
+    const formData = new FormData(event.target);
+    try {
+        const response = await fetch('/api/auth/login', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: new URLSearchParams(formData),
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            // Store the token
+            localStorage.setItem('auth_token', data.access_token);
+            // Update the UI immediately
+            const authRequired = document.querySelectorAll('.auth-required');
+            const authNotRequired = document.querySelectorAll('.auth-not-required');
+            authRequired.forEach(el => el.style.display = 'block');
+            authNotRequired.forEach(el => el.style.display = 'none');
+            // Redirect to the page that required authentication or home
+            const nextUrl = new URLSearchParams(window.location.search).get('next') || '/';
+            window.location.href = nextUrl;
+        } else {
+            const error = await response.json();
+            alert(error.detail || 'Login failed');
+        }
+    } catch (error) {
+        console.error('Login error:', error);
+        alert('Login failed. Please try again.');
+    }
+}
+</script>
+{% endblock %}
